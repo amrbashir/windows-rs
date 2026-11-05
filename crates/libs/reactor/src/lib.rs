@@ -63,7 +63,7 @@ pub use declaration::{
 };
 use generated::*;
 use ir::*;
-pub use native::{App, ScreenPoint, WindowTitleBarHeight};
+pub use native::{App, NativeWindow, ScreenPoint, WindowTitleBarHeight};
 use reconcile::*;
 use reference::*;
 pub use reference::{

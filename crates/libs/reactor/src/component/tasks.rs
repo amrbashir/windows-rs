@@ -27,6 +27,10 @@ pub(crate) trait ComponentUiServices {
         false
     }
 
+    fn native_window(&self) -> Option<NativeWindow> {
+        None
+    }
+
     fn run_window(&self, _operation: Box<dyn FnOnce(*mut core::ffi::c_void)>) -> bool {
         false
     }

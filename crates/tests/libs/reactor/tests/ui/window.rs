@@ -1,6 +1,28 @@
 use super::*;
 
 #[test]
+fn desired_size_query_measures_both_dimensions_without_resizing() -> Result<()> {
+    process::run("window-desired-size", |ui| {
+        ui.name("content-size", "Content 4000 x 3000")?;
+        let bounds = || -> Result<_> {
+            let mut rect = RECT::default();
+            unsafe { GetWindowRect(ui.window_handle()? as HWND, &mut rect).ok()? };
+            Ok((rect.left, rect.top, rect.right, rect.bottom))
+        };
+        let before = bounds()?;
+        ui.invoke("measure")?;
+        ui.name("desired", "Desired 4000.000 x 3000.000")?;
+        assert_eq!(bounds()?, before, "query moved or resized the window");
+        ui.invoke("shrink")?;
+        ui.name("content-size", "Content 700 x 500")?;
+        ui.invoke("measure")?;
+        ui.name("desired", "Desired 700.000 x 500.000")?;
+        assert_eq!(bounds()?, before, "query moved or resized the window");
+        Ok(())
+    })
+}
+
+#[test]
 fn window_title_and_client_size_updates() -> Result<()> {
     process::run("window", |ui| {
         let original = ui.element("resize")?;

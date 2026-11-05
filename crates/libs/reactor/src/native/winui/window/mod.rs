@@ -5,11 +5,9 @@ mod transparent;
 
 pub(super) mod placement;
 
-/// Advanced native window handle.
+/// A UI-thread handle to a native window owned by Reactor.
 ///
-/// Clones share the native window but not the `Closed` registration. The registration belongs to
-/// the handle passed to [`NativeWindow::set_closed`] and is revoked when that handle is dropped or
-/// registers a replacement.
+/// Clones share the native window. The window host controls its activation and lifetime.
 pub struct NativeWindow {
     state: Rc<NativeWindowState>,
     actual_theme_changed: Option<windows_core::EventRevoker>,
@@ -91,7 +89,24 @@ impl Clone for NativeWindow {
 }
 
 impl NativeWindow {
-    pub fn raw_handle(&self) -> Result<*mut core::ffi::c_void, WinUiError> {
+    /// Measures the content's desired width and height in device-independent pixels.
+    ///
+    /// Measures without width or height constraints. Does not resize or move this window or its
+    /// parent. Call after publishing content; the caller decides whether to use either dimension.
+    pub fn desired_size(&self) -> windows_core::Result<WindowSize> {
+        let root = self.state.root_element.cast::<native::IUIElement>()?;
+        root.Measure(native::Size {
+            width: f32::INFINITY,
+            height: f32::INFINITY,
+        })?;
+        let size = root.DesiredSize()?;
+        Ok(WindowSize {
+            width: f64::from(size.width),
+            height: f64::from(size.height),
+        })
+    }
+
+    pub fn raw_handle(&self) -> windows_core::Result<*mut core::ffi::c_void> {
         let handle = unsafe {
             self.state
                 .window
@@ -345,7 +360,7 @@ impl NativeWindow {
         Ok(())
     }
 
-    pub fn activate(&self) -> Result<(), WinUiError> {
+    pub(crate) fn activate(&self) -> Result<(), WinUiError> {
         if self.state.maximize_on_first_show.replace(false) {
             placement::show_maximized(self.raw_handle()?.cast())?;
         }
@@ -397,11 +412,11 @@ impl NativeWindow {
         Ok(())
     }
 
-    pub fn close(&self) -> Result<(), WinUiError> {
+    pub(crate) fn close(&self) -> Result<(), WinUiError> {
         self.state.window.Close().map_err(Into::into)
     }
 
-    pub fn set_closed(&mut self, callback: impl Fn() + 'static) -> Result<(), WinUiError> {
+    pub(crate) fn set_closed(&mut self, callback: impl Fn() + 'static) -> Result<(), WinUiError> {
         let state = Rc::downgrade(&self.state);
         self.closed = Some(self.state.window.Closed(move |_, _| {
             if let Some(state) = state.upgrade() {

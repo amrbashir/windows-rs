@@ -1,5 +1,74 @@
 use super::*;
 
+pub(super) struct DesiredSizeFixture {
+    small: bool,
+    desired: Option<WindowSize>,
+}
+
+#[derive(Clone, Copy)]
+pub(super) enum DesiredSizeMessage {
+    Measure,
+    Shrink,
+}
+
+impl Component for DesiredSizeFixture {
+    type Input = ();
+    type Message = DesiredSizeMessage;
+
+    fn create(_: &(), context: &ComponentContext<Self>) -> Self {
+        assert!(context.native_window().is_none());
+        Self {
+            small: false,
+            desired: None,
+        }
+    }
+
+    fn update(&mut self, message: Self::Message, context: &ComponentContext<Self>) {
+        match message {
+            DesiredSizeMessage::Measure => {
+                let window = context.native_window().unwrap();
+                self.desired = Some(window.desired_size().unwrap());
+            }
+            DesiredSizeMessage::Shrink => self.small = true,
+        }
+    }
+
+    fn view(&self, _: &(), context: &mut ViewContext<Self>) -> View {
+        context.window_title("Reactor UI fixture: window-desired-size");
+        context.window_visuals(WindowVisuals::new().client_size(480.0, 320.0));
+        let (width, height) = if self.small {
+            (700.0, 500.0)
+        } else {
+            (4000.0, 3000.0)
+        };
+        Grid::new()
+            .width(width)
+            .height(height)
+            .horizontal_alignment(HorizontalAlignment::Left)
+            .vertical_alignment(VerticalAlignment::Top)
+            .children((StackPanel::new().spacing(12.0).children((
+                Button::new()
+                    .automation_id("measure")
+                    .content("Query desired size")
+                    .on_click(context.message(DesiredSizeMessage::Measure)),
+                Button::new()
+                    .automation_id("shrink")
+                    .content("Shrink content")
+                    .on_click(context.message(DesiredSizeMessage::Shrink)),
+                TextBlock::new()
+                    .automation_id("desired")
+                    .text(self.desired.map_or_else(
+                        || "Not queried".to_owned(),
+                        |size| format!("Desired {:.3} x {:.3}", size.width, size.height),
+                    )),
+                TextBlock::new()
+                    .automation_id("content-size")
+                    .text(format!("Content {width:.0} x {height:.0}")),
+            )),))
+            .into()
+    }
+}
+
 pub(super) struct WindowFixture {
     resized: Option<bool>,
     icon: bool,

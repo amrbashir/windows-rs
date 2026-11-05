@@ -361,6 +361,7 @@ pub fn run(fixture: &str) -> windows_core::Result<()> {
         "command-bar" => App::run_component::<MenuFixture>(MenuSurface::CommandBar)?,
         "tray" => App::run_application::<tray::TrayFixture>(())?,
         "window" => App::run_component::<window::WindowFixture>(window::WindowMode::Native)?,
+        "window-desired-size" => App::run_component::<window::DesiredSizeFixture>(())?,
         "window-placement" => App::run_component::<window::PlacementFixture>(())?,
         "window-titlebar-initial" => App::run_component::<window::TitleBarFixture>(true)?,
         "window-titlebar-dynamic" => App::run_component::<window::TitleBarFixture>(false)?,

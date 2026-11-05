@@ -1243,6 +1243,7 @@ pub fn windows_reactor::ComponentContext<'_, C>::close_window(&self) -> bool
 pub fn windows_reactor::ComponentContext<'_, C>::forward(&self) -> windows_reactor::Callback<<C as windows_reactor::Component>::Message>
 pub fn windows_reactor::ComponentContext<'_, C>::input(&self) -> &<C as windows_reactor::Component>::Input
 pub fn windows_reactor::ComponentContext<'_, C>::message(&self, <C as windows_reactor::Component>::Message) -> windows_reactor::Callback<()> where <C as windows_reactor::Component>::Message: core::clone::Clone
+pub fn windows_reactor::ComponentContext<'_, C>::native_window(&self) -> core::option::Option<windows_reactor::NativeWindow>
 pub fn windows_reactor::ComponentContext<'_, C>::open_window<W: windows_reactor::Component>(&self, <W as windows_reactor::Component>::Input) -> bool
 pub fn windows_reactor::ComponentContext<'_, C>::open_window_with_policy<W: windows_reactor::Component>(&self, <W as windows_reactor::Component>::Input, windows_reactor::WindowPolicy) -> bool
 pub fn windows_reactor::ComponentContext<'_, C>::root(&self) -> windows_reactor::ElementRef
@@ -2446,6 +2447,14 @@ impl core::convert::From<windows_reactor::MenuBarItem> for windows_reactor::View
 pub fn windows_reactor::View::from(windows_reactor::MenuBarItem) -> Self
 impl core::default::Default for windows_reactor::MenuBarItem
 pub fn windows_reactor::MenuBarItem::default() -> Self
+pub struct windows_reactor::NativeWindow
+impl windows_reactor::NativeWindow
+pub fn windows_reactor::NativeWindow::desired_size(&self) -> windows_result::Result<windows_reactor::WindowSize>
+pub fn windows_reactor::NativeWindow::raw_handle(&self) -> windows_result::Result<*mut core::ffi::c_void>
+impl core::clone::Clone for windows_reactor::NativeWindow
+pub fn windows_reactor::NativeWindow::clone(&self) -> Self
+impl core::ops::drop::Drop for windows_reactor::NativeWindow
+pub fn windows_reactor::NativeWindow::drop(&mut self)
 pub struct windows_reactor::NavigationView(_)
 impl windows_reactor::NavigationView
 pub fn windows_reactor::NavigationView::always_show_header(self, bool) -> Self

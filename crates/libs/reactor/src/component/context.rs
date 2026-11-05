@@ -66,6 +66,13 @@ impl<C: Component> ComponentContext<'_, C> {
         self.ui_services.close_window()
     }
 
+    /// Returns a handle to this component's native window on the UI thread.
+    ///
+    /// Returns `None` before the native window is created or when running without one.
+    pub fn native_window(&self) -> Option<NativeWindow> {
+        self.ui_services.native_window()
+    }
+
     #[must_use]
     pub fn run_window(
         &self,

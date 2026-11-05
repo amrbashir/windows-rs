@@ -28,7 +28,7 @@ pub enum ColorScheme {
     Dark,
 }
 
-/// Current window client size in device-independent pixels.
+/// Window dimensions in device-independent pixels.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct WindowSize {
     pub width: f64,

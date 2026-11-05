@@ -516,6 +516,7 @@ impl LiveWindowServices {
 struct LiveComponentWindowServices {
     application: Rc<LiveWindowServices>,
     window: u64,
+    native: RefCell<Option<NativeWindow>>,
 }
 
 impl ComponentUiServices for LiveComponentWindowServices {
@@ -533,6 +534,10 @@ impl ComponentUiServices for LiveComponentWindowServices {
 
     fn close_window(&self) -> bool {
         self.application.push(WindowWork::Close(self.window))
+    }
+
+    fn native_window(&self) -> Option<NativeWindow> {
+        self.native.borrow().clone()
     }
 
     fn run_window(&self, operation: Box<dyn FnOnce(*mut core::ffi::c_void)>) -> bool {
@@ -737,14 +742,15 @@ fn open_component_window(
         (application.dispatcher.clone(), application.services.clone())
     };
     let state = Rc::new(RefCell::new(None::<ComponentWindowState>));
-    let ui_services: Rc<dyn ComponentUiServices> = Rc::new(LiveComponentWindowServices {
+    let ui_services = Rc::new(LiveComponentWindowServices {
         application: Rc::clone(services),
         window: id,
+        native: RefCell::new(None),
     });
     let mut host = ComponentHost::mount_with_all_services(
         SharedWinUiAdapter::default(),
         component_services,
-        ui_services,
+        ui_services.clone(),
         [root],
     );
     let drain_state = Rc::clone(&state);
@@ -832,6 +838,7 @@ fn open_component_window(
         return Err(error.into());
     }
     let native = window.clone();
+    *ui_services.native.borrow_mut() = Some(native.clone());
     *state.borrow_mut() = Some(ComponentWindowState {
         host,
         window,
