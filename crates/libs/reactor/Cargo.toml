@@ -20,6 +20,7 @@ windows-reference = { workspace = true, features = ["std"] }
 windows-threading = { workspace = true }
 windows-time = { workspace = true }
 windows-window = { workspace = true }
+windows = { version = "0.61", features = ["System", "UI_Composition", "Win32_System_WinRT"] }
 
 [lints]
 workspace = true

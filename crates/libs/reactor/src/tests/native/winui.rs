@@ -688,6 +688,15 @@ fn window_visual_changes_detect_icon_removal() {
 }
 
 #[test]
+fn window_visual_changes_detect_transparent_backdrop_transitions() {
+    let opaque = WindowVisuals::new();
+    let transparent = WindowVisuals::new().backdrop(WindowBackdrop::Transparent);
+    assert!(window_visual_changes(&opaque, &transparent).backdrop);
+    assert!(window_visual_changes(&transparent, &opaque).backdrop);
+    assert!(!window_visual_changes(&transparent, &transparent).any());
+}
+
+#[test]
 fn pointer_event_queue_preserves_payload_and_callback() {
     let mut runtime = Runtime::new(RecordingAdapter::default());
     runtime.update(Border::new());

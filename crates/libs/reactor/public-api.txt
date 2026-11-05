@@ -501,6 +501,7 @@ pub windows_reactor::WindowBackdrop::Acrylic
 pub windows_reactor::WindowBackdrop::Mica
 pub windows_reactor::WindowBackdrop::MicaAlt
 pub windows_reactor::WindowBackdrop::None
+pub windows_reactor::WindowBackdrop::Transparent
 pub enum windows_reactor::WindowTheme
 pub windows_reactor::WindowTheme::Dark
 pub windows_reactor::WindowTheme::Light

@@ -1,5 +1,7 @@
 use super::*;
 
+mod transparent;
+
 pub(super) mod placement;
 
 /// Advanced native window handle.
@@ -30,6 +32,7 @@ pub(super) struct NativeWindowState {
     maximize_on_first_show: Cell<bool>,
     placement_callback: RefCell<Option<Rc<dyn Fn(WindowPlacement)>>>,
     last_placement: Cell<Option<WindowPlacement>>,
+    transparent_backdrop: RefCell<Option<transparent::TransparentBackdrop>>,
 }
 
 impl NativeWindowState {
@@ -214,6 +217,7 @@ impl NativeWindow {
         };
 
         if changes.backdrop {
+            self.state.transparent_backdrop.borrow_mut().take();
             match visuals.backdrop {
                 WindowBackdrop::None => {
                     window_2.SetSystemBackdrop(None::<&native::SystemBackdrop>)?;
@@ -232,6 +236,11 @@ impl NativeWindow {
                     let backdrop: native::SystemBackdrop =
                         native::DesktopAcrylicBackdrop::new()?.cast()?;
                     window_2.SetSystemBackdrop(&backdrop)?;
+                }
+                WindowBackdrop::Transparent => {
+                    window_2.SetSystemBackdrop(None::<&native::SystemBackdrop>)?;
+                    *self.state.transparent_backdrop.borrow_mut() =
+                        Some(transparent::TransparentBackdrop::new(&self.state.window)?);
                 }
             }
             self.state
@@ -488,6 +497,7 @@ impl WinUiAdapter {
             maximize_on_first_show: Cell::new(false),
             placement_callback: RefCell::new(None),
             last_placement: Cell::new(None),
+            transparent_backdrop: RefCell::new(None),
         });
         if let Some((object, height)) = self.window_title_bar
             && self.owns(state.root, object)

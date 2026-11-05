@@ -8,6 +8,8 @@ pub enum WindowBackdrop {
     Mica,
     MicaAlt,
     Acrylic,
+    /// Uses a fully transparent system composition brush behind the XAML content.
+    Transparent,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
