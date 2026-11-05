@@ -1,5 +1,6 @@
 use super::*;
 
+mod child;
 mod transparent;
 
 pub(super) mod placement;
@@ -33,6 +34,7 @@ pub(super) struct NativeWindowState {
     placement_callback: RefCell<Option<Rc<dyn Fn(WindowPlacement)>>>,
     last_placement: Cell<Option<WindowPlacement>>,
     transparent_backdrop: RefCell<Option<transparent::TransparentBackdrop>>,
+    child: RefCell<Option<child::ChildWindow>>,
 }
 
 impl NativeWindowState {
@@ -121,6 +123,15 @@ impl NativeWindow {
                 placement::position_hidden(self.raw_handle()?.cast(), position)?;
             }
             self.apply_visuals(visuals, initial)?;
+            if initial && let Some(parent) = visuals.parent_window {
+                *self.state.child.borrow_mut() = Some(
+                    child::ChildWindow::new(self.raw_handle()?, parent).map_err(|error| {
+                        WinUiError::Native(windows_core::Error::from_hresult(HRESULT(
+                            error.code().0,
+                        )))
+                    })?,
+                );
+            }
             if initial && let Some(placement) = visuals.initial_placement {
                 placement::restore_hidden(self.raw_handle()?.cast(), placement)?;
                 self.state.maximize_on_first_show.set(placement.maximized);
@@ -338,7 +349,14 @@ impl NativeWindow {
         if self.state.maximize_on_first_show.replace(false) {
             placement::show_maximized(self.raw_handle()?.cast())?;
         }
-        self.state.window.Activate()?;
+        if self.state.child.borrow().is_none() {
+            self.state.window.Activate()?;
+        }
+        if let Some(child) = self.state.child.borrow().as_ref() {
+            child.resize().map_err(|error| {
+                WinUiError::Native(windows_core::Error::from_hresult(HRESULT(error.code().0)))
+            })?;
+        }
         self.state.shown.set(true);
         self.state.observe_placement()?;
         Ok(())
@@ -498,6 +516,7 @@ impl WinUiAdapter {
             placement_callback: RefCell::new(None),
             last_placement: Cell::new(None),
             transparent_backdrop: RefCell::new(None),
+            child: RefCell::new(None),
         });
         if let Some((object, height)) = self.window_title_bar
             && self.owns(state.root, object)

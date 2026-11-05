@@ -4649,6 +4649,7 @@ pub fn windows_reactor::WindowVisuals::icon(self, impl core::convert::Into<alloc
 pub fn windows_reactor::WindowVisuals::initial_placement(self, windows_reactor::WindowPlacement) -> Self
 pub fn windows_reactor::WindowVisuals::initial_position(self, windows_reactor::ScreenPoint) -> Self
 pub fn windows_reactor::WindowVisuals::new() -> Self
+pub unsafe fn windows_reactor::WindowVisuals::parent_window(self, usize) -> Self
 pub fn windows_reactor::WindowVisuals::theme(self, windows_reactor::WindowTheme) -> Self
 pub trait windows_reactor::Application: core::marker::Sized + 'static
 pub type windows_reactor::Application::Input: 'static

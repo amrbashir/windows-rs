@@ -108,6 +108,7 @@ pub struct WindowVisuals {
     pub(crate) theme: WindowTheme,
     pub(crate) initial_position: Option<ScreenPoint>,
     pub(crate) initial_placement: Option<WindowPlacement>,
+    pub(crate) parent_window: Option<usize>,
 }
 
 impl WindowVisuals {
@@ -117,6 +118,18 @@ impl WindowVisuals {
 
     pub fn backdrop(mut self, backdrop: WindowBackdrop) -> Self {
         self.backdrop = backdrop;
+        self
+    }
+
+    /// Embeds this window in a native HWND and skips activation when showing it.
+    ///
+    /// Read only from the initial component declaration. Later changes do not reparent the window.
+    ///
+    /// # Safety
+    ///
+    /// The parent must be a live HWND on this UI thread and outlive the component window.
+    pub unsafe fn parent_window(mut self, parent: usize) -> Self {
+        self.parent_window = Some(parent);
         self
     }
 
