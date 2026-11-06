@@ -363,6 +363,12 @@ impl RetainedGraph {
                     .menu
                     .on_click,
             ),
+            EventId::ContextMenuItemInvoked => Some(
+                &attachments
+                    .and_then(|attachments| attachments.context_menu.as_ref())?
+                    .menu
+                    .on_click,
+            ),
             EventId::CommandInvoked => Some(
                 &attachments
                     .and_then(|attachments| attachments.command_bar_flyout.as_ref())?

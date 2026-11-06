@@ -88,6 +88,11 @@ pub enum Mutation {
         menu: Option<Menu>,
         revision: u64,
     },
+    SetContextMenu {
+        target: ObjectId,
+        menu: Option<Menu>,
+        revision: u64,
+    },
     SetCommandBarFlyout {
         target: ObjectId,
         flyout: Option<CommandBarFlyout>,
@@ -370,6 +375,7 @@ struct RetainedAttachments {
     tooltip: Option<RetainedTooltip>,
     flyout: Option<RetainedFlyout>,
     menu: Option<RetainedMenu>,
+    context_menu: Option<RetainedMenu>,
     command_bar_flyout: Option<RetainedCommandBarFlyout>,
     content_dialog: Option<RetainedContentDialog>,
 }
@@ -379,6 +385,7 @@ impl RetainedAttachments {
         tooltip: None,
         flyout: None,
         menu: None,
+        context_menu: None,
         command_bar_flyout: None,
         content_dialog: None,
     };

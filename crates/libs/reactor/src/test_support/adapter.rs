@@ -16,6 +16,7 @@ pub struct RecordingAdapter {
     flyouts: HashMap<ObjectId, (ObjectId, FlyoutPlacement)>,
     flyout_owners: HashMap<ObjectId, ObjectId>,
     menus: HashMap<ObjectId, (Menu, u64)>,
+    context_menus: HashMap<ObjectId, (Menu, u64)>,
     command_bar_flyouts: HashMap<ObjectId, (CommandBarFlyout, u64)>,
     content_dialogs: HashMap<ObjectId, (ObjectId, bool)>,
     content_dialog_owners: HashMap<ObjectId, ObjectId>,
@@ -87,6 +88,7 @@ impl RecordingAdapter {
             flyouts: HashMap::new(),
             flyout_owners: HashMap::new(),
             menus: HashMap::new(),
+            context_menus: HashMap::new(),
             command_bar_flyouts: HashMap::new(),
             content_dialogs: HashMap::new(),
             content_dialog_owners: HashMap::new(),
@@ -157,6 +159,19 @@ impl RecordingAdapter {
         self.queue_event(EventDispatch::new(
             target,
             EventId::MenuItemInvoked,
+            EventCall::Key(callback, key.into()),
+        ));
+    }
+
+    pub fn context_menu(&self, target: ObjectId) -> Option<&Menu> {
+        self.context_menus.get(&target).map(|(menu, _)| menu)
+    }
+
+    pub fn queue_context_menu_click(&mut self, target: ObjectId, key: impl Into<Key>) {
+        let callback = self.context_menus.get(&target).unwrap().0.on_click.clone();
+        self.queue_event(EventDispatch::new(
+            target,
+            EventId::ContextMenuItemInvoked,
             EventCall::Key(callback, key.into()),
         ));
     }
@@ -548,6 +563,24 @@ impl RecordingAdapter {
                         self.menus.remove(target);
                     }
                 }
+                Mutation::SetContextMenu {
+                    target,
+                    menu,
+                    revision,
+                } => {
+                    self.require_object(*target)?;
+                    if object_category(self.objects.get(target).unwrap().kind)
+                        != ObjectCategory::Visual
+                    {
+                        return Err(AdapterError::InvalidReplacement(*target));
+                    }
+                    if let Some(menu) = menu {
+                        self.context_menus
+                            .insert(*target, (menu.clone(), *revision));
+                    } else {
+                        self.context_menus.remove(target);
+                    }
+                }
                 Mutation::SetCommandBarFlyout {
                     target,
                     flyout,
@@ -882,6 +915,7 @@ impl RecordingAdapter {
                         || self.flyouts.contains_key(object)
                         || self.flyout_owners.contains_key(object)
                         || self.menus.contains_key(object)
+                        || self.context_menus.contains_key(object)
                         || self.command_bar_flyouts.contains_key(object)
                         || self.content_dialogs.contains_key(object)
                         || self.content_dialog_owners.contains_key(object)

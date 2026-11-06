@@ -236,6 +236,7 @@ impl WinUiAdapter {
                     &self.event_queue,
                     target,
                     revision,
+                    EventId::MenuItemInvoked,
                 )?;
                 self.ui_element(target)?
                     .cast::<native::IButton>()?
@@ -255,6 +256,7 @@ impl WinUiAdapter {
                     &self.event_queue,
                     target,
                     revision,
+                    EventId::MenuItemInvoked,
                 )?;
                 None
             }
@@ -266,6 +268,56 @@ impl WinUiAdapter {
                 menu: menu.clone(),
                 revision,
                 flyout,
+                _revokers: revokers,
+            },
+        );
+        Ok(())
+    }
+
+    pub(super) fn set_context_menu(
+        &mut self,
+        target: ObjectId,
+        menu: Option<&Menu>,
+        revision: u64,
+    ) -> Result<(), WinUiError> {
+        if let Some(menu) = menu
+            && let Some(current) = self.context_menus.get_mut(&target)
+            && current.revision == revision
+        {
+            current.menu.clone_from(menu);
+            return Ok(());
+        }
+        let element = self.ui_element(target)?.cast::<native::IUIElement>()?;
+        if let Some(previous) = self.context_menus.remove(&target) {
+            if let Some(flyout) = &previous.flyout {
+                flyout.cast::<native::IFlyoutBase>()?.Hide()?;
+            }
+            element.SetContextFlyout(None::<&native::FlyoutBase>)?;
+        }
+        let Some(menu) = menu else {
+            return Ok(());
+        };
+        let flyout = native::MenuFlyout::new()?;
+        flyout
+            .cast::<native::IFlyoutBase>()?
+            .SetShouldConstrainToRootBounds(false)?;
+        let mut revokers = Vec::new();
+        build_menu_items(
+            &menu.items,
+            &flyout.Items()?,
+            &mut revokers,
+            &self.event_queue,
+            target,
+            revision,
+            EventId::ContextMenuItemInvoked,
+        )?;
+        element.SetContextFlyout(&flyout)?;
+        self.context_menus.insert(
+            target,
+            NativeMenu {
+                menu: menu.clone(),
+                revision,
+                flyout: Some(flyout),
                 _revokers: revokers,
             },
         );
@@ -390,6 +442,7 @@ fn build_menu_items(
     event_queue: &Rc<NativeEventQueue>,
     target: ObjectId,
     revision: u64,
+    event: EventId,
 ) -> Result<(), WinUiError> {
     for entry in items {
         let item: native::MenuFlyoutItemBase = match entry {
@@ -408,7 +461,7 @@ fn build_menu_items(
                         None,
                         Some(QueuedEvent {
                             object: target,
-                            event: EventId::MenuItemInvoked,
+                            event,
                             handler: QueuedHandler::Presentation {
                                 revision,
                                 key: clicked_key.clone(),
@@ -429,6 +482,7 @@ fn build_menu_items(
                     event_queue,
                     target,
                     revision,
+                    event,
                 )?;
                 item.cast()?
             }

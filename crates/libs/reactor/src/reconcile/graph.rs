@@ -177,6 +177,14 @@ impl RetainedGraph {
             _ => return false,
         }
         match (
+            &current_attachments.context_menu,
+            &declared_attachments.context_menu,
+        ) {
+            (None, None) => {}
+            (Some(current), Some(declared)) if current.menu == declared.menu => {}
+            _ => return false,
+        }
+        match (
             &current_attachments.command_bar_flyout,
             &declared_attachments.command_bar_flyout,
         ) {

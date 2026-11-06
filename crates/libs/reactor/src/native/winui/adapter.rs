@@ -168,6 +168,13 @@ impl WinUiAdapter {
                     menu,
                     revision,
                 } => self.set_menu(*target, menu.as_ref(), *revision)?,
+                Mutation::SetContextMenu {
+                    target,
+                    menu,
+                    revision,
+                } => {
+                    self.set_context_menu(*target, menu.as_ref(), *revision)?;
+                }
                 Mutation::SetCommandBarFlyout {
                     target,
                     flyout,
@@ -284,6 +291,7 @@ impl WinUiAdapter {
                             || self.flyouts.contains_key(object)
                             || self.flyout_owners.contains_key(object)
                             || self.menus.contains_key(object)
+                            || self.context_menus.contains_key(object)
                             || self.command_bar_flyouts.contains_key(object)
                             || self.content_dialogs.contains_key(object)
                             || self.content_dialog_owners.contains_key(object)
@@ -307,6 +315,7 @@ impl WinUiAdapter {
                         || self.flyouts.contains_key(object)
                         || self.flyout_owners.contains_key(object)
                         || self.menus.contains_key(object)
+                        || self.context_menus.contains_key(object)
                         || self.command_bar_flyouts.contains_key(object)
                         || self.content_dialogs.contains_key(object)
                         || self.content_dialog_owners.contains_key(object)

@@ -1741,6 +1741,7 @@ pub(crate) struct DeclaredAttachments {
     pub tooltip: Option<DeclaredTooltip>,
     pub flyout: Option<DeclaredFlyout>,
     pub menu: Option<DeclaredMenu>,
+    pub context_menu: Option<DeclaredMenu>,
     pub command_bar_flyout: Option<DeclaredCommandBarFlyout>,
     pub content_dialog: Option<DeclaredContentDialog>,
 }
@@ -1750,6 +1751,7 @@ impl DeclaredAttachments {
         tooltip: None,
         flyout: None,
         menu: None,
+        context_menu: None,
         command_bar_flyout: None,
         content_dialog: None,
     };
@@ -2169,6 +2171,7 @@ impl Declaration {
                 tooltip,
                 flyout,
                 menu: _,
+                context_menu: _,
                 command_bar_flyout: _,
                 content_dialog,
             } = *attachments;
@@ -2250,6 +2253,20 @@ pub trait FlyoutExt: Into<View> + Sized {
 impl<T> FlyoutExt for T where T: Into<View> {}
 
 pub trait MenuExt: Into<View> + Sized {
+    /// Attaches a WinUI context menu, opened by right-click, touch hold, or the context-menu key.
+    ///
+    /// Can coexist with a button's ordinary menu or flyout. The menu is allowed to extend beyond
+    /// the window's content bounds, including when the window is embedded in a native host.
+    fn context_menu(self, menu: Menu) -> View {
+        let mut visual = self.into();
+        visual
+            .0
+            .attachments_mut()
+            .get_or_insert_with(Default::default)
+            .context_menu = Some(DeclaredMenu { menu });
+        visual
+    }
+
     fn menu(self, menu: Menu) -> View {
         let mut visual = self.into();
         let menu = DeclaredMenu { menu };

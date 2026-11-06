@@ -1,5 +1,59 @@
 use super::*;
 
+fn open_context(ui: &Automation, label: &str) -> Result<IUIAutomationElement> {
+    unsafe { ui.element("replace")?.SetFocus().ok()? };
+    ui.focus("replace")?;
+    ui.move_resize_window(200, 200, 700, 600)?;
+    ui.settled("open", Duration::from_millis(250))?;
+    ui.pointer_move("open", 0.5, 0.5)?;
+    send_mouse(MOUSEEVENTF_RIGHTDOWN, 0, 0)?;
+    send_mouse(MOUSEEVENTF_RIGHTUP, 0, 0)?;
+    ui.menu_item(label)
+}
+
+fn open_context_keyboard(ui: &Automation, label: &str) -> Result<IUIAutomationElement> {
+    unsafe { ui.element("context-focus")?.SetFocus().ok()? };
+    ui.press_keys("context-focus", &[0x5d])?;
+    ui.menu_item(label)
+}
+
+#[test]
+fn context_menu_callback_replacement_and_removal() -> Result<()> {
+    process::run("menu-context", |ui| {
+        let original = open_context(ui, "Command")?;
+        ui.invoke("replace")?;
+        ui.name("state", "Generation 1; attached true")?;
+        same_item(ui, &original, "Command")?;
+        invoke(&original)?;
+        ui.name("selection", "Selected 1; calls 1")?;
+        closed(ui, "Command")?;
+        let stale = unsafe {
+            open_context(ui, "Command")?
+                .GetCurrentPatternAs::<IUIAutomationInvokePattern>(INVOKE_PATTERN)?
+        };
+        ui.invoke("remove")?;
+        ui.name("state", "Generation 1; attached false")?;
+        closed(ui, "Command")?;
+        retired(ui, &stale, "Selected 1; calls 1")
+    })
+}
+
+#[test]
+fn context_menu_content_replacement_retires_open_items() -> Result<()> {
+    process::run("menu-context", |ui| {
+        let stale = unsafe {
+            open_context_keyboard(ui, "Command")?
+                .GetCurrentPatternAs::<IUIAutomationInvokePattern>(INVOKE_PATTERN)?
+        };
+        ui.invoke("change")?;
+        ui.name("content", "Changed")?;
+        closed(ui, "Command")?;
+        retired(ui, &stale, "Selected 0; calls 0")?;
+        invoke(&open_context_keyboard(ui, "Changed command")?)?;
+        ui.name("selection", "Selected 0; calls 1")
+    })
+}
+
 fn open(ui: &Automation, label: &str) -> Result<IUIAutomationElement> {
     ui.invoke("open")?;
     let item = ui.menu_item(label)?;

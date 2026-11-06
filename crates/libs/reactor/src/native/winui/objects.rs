@@ -382,6 +382,7 @@ impl WinUiAdapter {
             || self.flyouts.contains_key(&object)
             || self.flyout_owners.contains_key(&object)
             || self.menus.contains_key(&object)
+            || self.context_menus.contains_key(&object)
             || self.command_bar_flyouts.contains_key(&object)
             || self.content_dialogs.contains_key(&object)
             || self.content_dialog_owners.contains_key(&object)

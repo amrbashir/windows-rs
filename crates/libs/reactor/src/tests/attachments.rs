@@ -1,6 +1,112 @@
 use super::*;
 
 #[test]
+fn context_menu_is_independent_of_button_menu_and_ignores_detached_clicks() {
+    let calls = Rc::new(RefCell::new(Vec::new()));
+    let primary_calls = Rc::clone(&calls);
+    let primary = Menu::new([MenuItem::item("command", "Primary")], move |key| {
+        primary_calls.borrow_mut().push(("primary", key));
+    });
+    let context_calls = Rc::clone(&calls);
+    let context = Menu::new([MenuItem::item("command", "Context")], move |key| {
+        context_calls.borrow_mut().push(("context", key));
+    });
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(
+        Button::new()
+            .menu(primary.clone())
+            .context_menu(context.clone()),
+    );
+    let target = runtime.graph().root().unwrap();
+    runtime.adapter_mut().queue_menu_click(target, "command");
+    runtime
+        .adapter_mut()
+        .queue_context_menu_click(target, "command");
+    assert_eq!(runtime.dispatch_native_events(), 2);
+    assert_eq!(
+        *calls.borrow(),
+        [
+            ("primary", Key::from("command")),
+            ("context", Key::from("command"))
+        ]
+    );
+
+    runtime.update(Button::new().menu(primary));
+    assert!(runtime.adapter().context_menu(target).is_none());
+    assert!(runtime.adapter().menu(target).is_some());
+    runtime.adapter_mut().queue_event(EventDispatch::new(
+        target,
+        EventId::ContextMenuItemInvoked,
+        EventCall::Key(context.on_click, "command".into()),
+    ));
+    assert_eq!(runtime.dispatch_native_events(), 0);
+    assert_eq!(calls.borrow().len(), 2);
+}
+
+#[test]
+fn context_menu_on_border_updates_callbacks_and_detaches_before_replacement() {
+    let calls = Rc::new(RefCell::new(Vec::new()));
+    let build = |generation| {
+        let calls = Rc::clone(&calls);
+        Menu::new(
+            [MenuItem::submenu(
+                "more",
+                "More",
+                [MenuItem::item("nested", "Nested")],
+            )],
+            move |key| {
+                calls.borrow_mut().push((generation, key));
+            },
+        )
+    };
+    let mut runtime = Runtime::new(RecordingAdapter::default());
+    runtime.update(Border::new().content(Border::new().context_menu(build(0))));
+    let root = runtime.graph().root().unwrap();
+    let target = runtime.graph().child(root, RelationId::Content).unwrap();
+    let updates = runtime.update(Border::new().content(Border::new().context_menu(build(1))));
+    assert!(matches!(
+        &updates[0],
+        Mutation::SetContextMenu { revision: 1, .. }
+    ));
+    runtime
+        .adapter_mut()
+        .queue_context_menu_click(target, "nested");
+    assert_eq!(runtime.dispatch_native_events(), 1);
+    assert_eq!(*calls.borrow(), [(1, Key::from("nested"))]);
+    let retained = runtime.adapter().context_menu(target).unwrap().clone();
+    assert!(
+        runtime
+            .update(Border::new().content(Border::new().context_menu(retained.clone())))
+            .is_empty()
+    );
+    let updates = runtime.update_subtree(target, Grid::new().context_menu(retained));
+    let detach = updates
+        .iter()
+        .position(|update| matches!(update, Mutation::SetContextMenu { menu: None, .. }))
+        .unwrap();
+    let replace = updates
+        .iter()
+        .position(|update| matches!(update, Mutation::Replace { .. }))
+        .unwrap();
+    let attach = updates
+        .iter()
+        .position(|update| {
+            matches!(
+                update,
+                Mutation::SetContextMenu {
+                    menu: Some(_),
+                    revision: 2,
+                    ..
+                }
+            )
+        })
+        .unwrap();
+    assert!(detach < replace && replace < attach);
+    runtime.update(Border::new());
+    assert!(runtime.adapter().context_menu(target).is_none());
+}
+
+#[test]
 fn title_bar_declaration_owns_window_attachment() {
     let mut runtime = Runtime::new(RecordingAdapter::default());
     let mutations = runtime.update(Grid::new().keyed_children([keyed(

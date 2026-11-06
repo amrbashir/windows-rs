@@ -325,6 +325,12 @@ fn validate_object(
             }
             validate_menu_items(&menu.menu.items, &mut HashSet::new());
         }
+        if let Some(menu) = &attachments.context_menu {
+            if object_category(declaration.kind) != ObjectCategory::Visual {
+                invalid_attachment(declaration.kind);
+            }
+            validate_menu_items(&menu.menu.items, &mut HashSet::new());
+        }
         if let Some(flyout) = &attachments.command_bar_flyout {
             if declaration.kind != ObjectType::Button {
                 invalid_attachment(declaration.kind);

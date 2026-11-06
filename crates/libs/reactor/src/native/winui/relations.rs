@@ -712,6 +712,14 @@ impl WinUiAdapter {
                     (menu.revision == *revision)
                         .then(|| EventCall::Key(menu.menu.on_click.clone(), key.clone()))
                 }
+                (
+                    QueuedHandler::Presentation { revision, key },
+                    EventId::ContextMenuItemInvoked,
+                ) => {
+                    let menu = self.context_menus.get(&queued.object)?;
+                    (menu.revision == *revision)
+                        .then(|| EventCall::Key(menu.menu.on_click.clone(), key.clone()))
+                }
                 (QueuedHandler::Presentation { revision, key }, EventId::CommandInvoked) => {
                     let flyout = self.command_bar_flyouts.get(&queued.object)?;
                     (flyout.revision == *revision)

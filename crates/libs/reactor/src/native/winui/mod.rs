@@ -535,6 +535,7 @@ pub struct WinUiAdapter {
     flyouts: HashMap<ObjectId, (native::Flyout, ObjectId, FlyoutPlacement)>,
     flyout_owners: HashMap<ObjectId, ObjectId>,
     menus: HashMap<ObjectId, NativeMenu>,
+    context_menus: HashMap<ObjectId, NativeMenu>,
     command_bar_flyouts: HashMap<ObjectId, NativeCommandBarFlyout>,
     content_dialogs: HashMap<ObjectId, ObjectId>,
     content_dialog_owners: HashMap<ObjectId, ObjectId>,
@@ -581,6 +582,7 @@ impl Default for WinUiAdapter {
             flyouts: HashMap::new(),
             flyout_owners: HashMap::new(),
             menus: HashMap::new(),
+            context_menus: HashMap::new(),
             command_bar_flyouts: HashMap::new(),
             content_dialogs: HashMap::new(),
             content_dialog_owners: HashMap::new(),
@@ -607,6 +609,9 @@ impl Drop for WinUiAdapter {
         self.observations.clear();
         for target in self.menus.keys().copied().collect::<Vec<_>>() {
             _ = self.set_menu(target, None, 0);
+        }
+        for target in self.context_menus.keys().copied().collect::<Vec<_>>() {
+            _ = self.set_context_menu(target, None, 0);
         }
         for target in self.command_bar_flyouts.keys().copied().collect::<Vec<_>>() {
             _ = self.set_command_bar_flyout(target, None, 0);

@@ -55,6 +55,9 @@ impl Planner<'_> {
         if let Some(menu) = &previous.menu {
             self.detach_menu(target, menu);
         }
+        if let Some(menu) = &previous.context_menu {
+            self.detach_context_menu(target, menu);
+        }
         if let Some(flyout) = &previous.command_bar_flyout {
             self.detach_command_bar_flyout(target, flyout);
         }
@@ -74,6 +77,9 @@ impl Planner<'_> {
         }
         if let Some(menu) = previous.menu {
             self.detach_menu(target, &menu);
+        }
+        if let Some(menu) = previous.context_menu {
+            self.detach_context_menu(target, &menu);
         }
         if let Some(flyout) = previous.flyout {
             self.detach_flyout(target, &flyout);
@@ -98,6 +104,12 @@ impl Planner<'_> {
         self.reconcile_tooltip(target, previous.tooltip, desired.tooltip.as_ref(), replaced);
         self.reconcile_flyout(target, previous.flyout, desired.flyout.as_ref(), replaced);
         self.reconcile_menu(target, previous.menu, desired.menu.as_ref(), replaced);
+        self.reconcile_context_menu(
+            target,
+            previous.context_menu,
+            desired.context_menu.as_ref(),
+            replaced,
+        );
         self.reconcile_command_bar_flyout(
             target,
             previous.command_bar_flyout,
@@ -235,6 +247,49 @@ impl Planner<'_> {
             revision,
         });
         self.mutations.push(Mutation::SetMenu {
+            target,
+            menu: Some(desired.menu.clone()),
+            revision,
+        });
+    }
+
+    fn detach_context_menu(&mut self, target: ObjectId, menu: &RetainedMenu) {
+        self.mutations.push(Mutation::SetContextMenu {
+            target,
+            menu: None,
+            revision: menu.revision.wrapping_add(1),
+        });
+    }
+
+    fn reconcile_context_menu(
+        &mut self,
+        target: ObjectId,
+        previous: Option<RetainedMenu>,
+        desired: Option<&DeclaredMenu>,
+        replaced: bool,
+    ) {
+        let Some(desired) = desired else {
+            if let Some(previous) = previous.filter(|_| !replaced) {
+                self.detach_context_menu(target, &previous);
+            }
+            return;
+        };
+        let revision = match previous {
+            Some(previous) if !replaced && previous.menu == desired.menu => {
+                self.retained_attachments(target).context_menu = Some(previous);
+                return;
+            }
+            Some(previous) if !replaced && previous.menu.same_content(&desired.menu) => {
+                previous.revision
+            }
+            Some(previous) => previous.revision.wrapping_add(1),
+            None => 1,
+        };
+        self.retained_attachments(target).context_menu = Some(RetainedMenu {
+            menu: desired.menu.clone(),
+            revision,
+        });
+        self.mutations.push(Mutation::SetContextMenu {
             target,
             menu: Some(desired.menu.clone()),
             revision,

@@ -1138,6 +1138,7 @@ fn generate(schema: &Schema, metadata: &tool_reactor_metadata::MetadataResolver)
         properties.insert("IsEnabled", &Value::Bool);
     }
     events.insert("MenuItemInvoked", &Value::String);
+    events.insert("ContextMenuItemInvoked", &Value::String);
     events.insert("CommandInvoked", &Value::String);
     for object in &schema.objects {
         for property in &object.properties {

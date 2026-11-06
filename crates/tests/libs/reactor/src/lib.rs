@@ -35,6 +35,7 @@ pub use controlled::{CHURN_ITEMS, date};
 #[derive(Clone, Copy, PartialEq)]
 enum MenuSurface {
     Button,
+    Context,
     DropDown,
     MenuBar,
     CommandBar,
@@ -94,6 +95,25 @@ impl Component for MenuFixture {
     fn view(&self, input: &MenuSurface, context: &mut ViewContext<Self>) -> View {
         let generation = self.generation;
         let (title, mut target): (&str, View) = match input {
+            MenuSurface::Context => (
+                "Reactor UI fixture: menu-context",
+                Border::new()
+                    .automation_id("open")
+                    .automation_name("Open context menu")
+                    .background(Color {
+                        a: 255,
+                        r: 80,
+                        g: 80,
+                        b: 80,
+                    })
+                    .padding(14.0)
+                    .content(
+                        Button::new()
+                            .automation_id("context-focus")
+                            .content("Right-click here"),
+                    )
+                    .into(),
+            ),
             MenuSurface::Button => (
                 "Reactor UI fixture: menu",
                 Button::new()
@@ -140,13 +160,18 @@ impl Component for MenuFixture {
                     callback,
                 ))
             } else {
-                target.menu(Menu::new(
+                let menu = Menu::new(
                     [
                         MenuItem::item("command", label),
                         MenuItem::submenu("more", "More", [MenuItem::item("nested", "Nested")]),
                     ],
                     callback,
-                ))
+                );
+                if *input == MenuSurface::Context {
+                    target.context_menu(menu)
+                } else {
+                    target.menu(menu)
+                }
             };
         }
         let target = if *input == MenuSurface::MenuBar {
@@ -356,6 +381,7 @@ pub fn run(fixture: &str) -> windows_core::Result<()> {
         "timer" => App::run_component::<timer::TimerFixture>(())?,
         "tree" => App::run_component::<tree::TreeFixture>(())?,
         "menu" => App::run_component::<MenuFixture>(MenuSurface::Button)?,
+        "menu-context" => App::run_component::<MenuFixture>(MenuSurface::Context)?,
         "menu-dropdown" => App::run_component::<MenuFixture>(MenuSurface::DropDown)?,
         "menu-bar" => App::run_component::<MenuFixture>(MenuSurface::MenuBar)?,
         "command-bar" => App::run_component::<MenuFixture>(MenuSurface::CommandBar)?,

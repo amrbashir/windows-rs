@@ -299,6 +299,7 @@ pub enum EventId {
     Closed,
     ColorChanged,
     CommandInvoked,
+    ContextMenuItemInvoked,
     DateChanged,
     DisplayModeChanged,
     DragEnter,
