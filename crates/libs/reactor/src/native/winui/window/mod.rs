@@ -413,6 +413,9 @@ impl NativeWindow {
     }
 
     pub(crate) fn close(&self) -> Result<(), WinUiError> {
+        if let Some(backdrop) = self.state.transparent_backdrop.borrow_mut().as_mut() {
+            backdrop.clear();
+        }
         self.state.window.Close().map_err(Into::into)
     }
 
@@ -421,6 +424,9 @@ impl NativeWindow {
         self.closed = Some(self.state.window.Closed(move |_, _| {
             if let Some(state) = state.upgrade() {
                 state.closed.set(true);
+                if let Some(backdrop) = state.transparent_backdrop.borrow_mut().as_mut() {
+                    backdrop.window_closed();
+                }
             }
             callback();
         })?);

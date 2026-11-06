@@ -1,6 +1,19 @@
 use super::*;
 
 #[test]
+fn transparent_window_native_close_releases_backdrop_safely() -> Result<()> {
+    process::run("window-transparent", |ui| {
+        ui.element("resize")?;
+        Ok(())
+    })
+}
+
+#[test]
+fn transparent_window_programmatic_close_releases_backdrop_safely() -> Result<()> {
+    process::run_to_exit("window-transparent-close")
+}
+
+#[test]
 fn desired_size_query_measures_both_dimensions_without_resizing() -> Result<()> {
     process::run("window-desired-size", |ui| {
         ui.name("content-size", "Content 4000 x 3000")?;

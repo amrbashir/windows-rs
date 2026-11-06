@@ -80,6 +80,8 @@ pub(super) enum WindowMode {
     Native,
     Custom,
     CustomPolicy,
+    Transparent,
+    TransparentClose,
 }
 
 #[derive(Clone, Copy)]
@@ -87,6 +89,7 @@ pub(super) enum Message {
     Resize(bool),
     Icon(bool),
     Size(WindowSize),
+    Close,
 }
 
 impl Component for WindowFixture {
@@ -101,11 +104,14 @@ impl Component for WindowFixture {
         }
     }
 
-    fn update(&mut self, message: Message, _: &ComponentContext<Self>) {
+    fn update(&mut self, message: Message, context: &ComponentContext<Self>) {
         match message {
             Message::Resize(resized) => self.resized = Some(resized),
             Message::Icon(icon) => self.icon = icon,
             Message::Size(size) => self.observed = size,
+            Message::Close => {
+                _ = context.close_window();
+            }
         }
     }
 
@@ -121,10 +127,22 @@ impl Component for WindowFixture {
             WindowMode::Native => "window",
             WindowMode::Custom => "window-frame",
             WindowMode::CustomPolicy => "window-frame-policy",
+            WindowMode::Transparent => "window-transparent",
+            WindowMode::TransparentClose => "window-transparent-close",
         };
         let suffix = if resized { " updated" } else { "" };
         let title = format!("Reactor UI fixture: {fixture}{suffix}");
         let mut visuals = WindowVisuals::new();
+        if matches!(mode, WindowMode::Transparent | WindowMode::TransparentClose) {
+            visuals = visuals.backdrop(WindowBackdrop::Transparent);
+        }
+        if *mode == WindowMode::TransparentClose {
+            let sender = context.sender();
+            context.use_effect("close", (), move || {
+                _ = sender.send(Message::Close);
+                None
+            });
+        }
         if *mode != WindowMode::CustomPolicy || self.resized.is_some() {
             visuals = visuals.client_size(width, height);
         }
@@ -154,7 +172,7 @@ impl Component for WindowFixture {
                 self.observed.width, self.observed.height
             )),
         ));
-        if *mode != WindowMode::Native {
+        if matches!(mode, WindowMode::Custom | WindowMode::CustomPolicy) {
             context.window_frame(title, content)
         } else {
             context.window_title(title);

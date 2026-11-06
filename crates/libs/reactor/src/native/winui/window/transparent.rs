@@ -44,7 +44,7 @@ impl SystemCompositor {
 
 /// Shares the system compositor across windows and clears the brush before releasing it.
 pub(super) struct TransparentBackdrop {
-    target: ICompositionSupportsSystemBackdrop,
+    target: Option<ICompositionSupportsSystemBackdrop>,
     _brush: CompositionBrush,
     _compositor: Rc<SystemCompositor>,
 }
@@ -69,7 +69,7 @@ impl TransparentBackdrop {
                 .cast()?;
             target.SetSystemBackdrop(&brush)?;
             Ok(Self {
-                target,
+                target: Some(target),
                 _brush: brush,
                 _compositor: compositor,
             })
@@ -78,10 +78,23 @@ impl TransparentBackdrop {
             WinUiError::Native(windows_core::Error::from_hresult(HRESULT(error.code().0)))
         })
     }
+
+    /// A closed WinUI window has already released its native backing state. Calling its backdrop
+    /// setter at that point can access freed state, even while the COM interface remains alive.
+    pub(super) fn window_closed(&mut self) {
+        self.target.take();
+    }
+
+    pub(super) fn clear(&mut self) {
+        // Detach while the window is live, but retain the brush and compositor through teardown.
+        if let Some(target) = self.target.take() {
+            let _ = target.SetSystemBackdrop(None::<&CompositionBrush>);
+        }
+    }
 }
 
 impl Drop for TransparentBackdrop {
     fn drop(&mut self) {
-        let _ = self.target.SetSystemBackdrop(None::<&CompositionBrush>);
+        self.clear();
     }
 }
