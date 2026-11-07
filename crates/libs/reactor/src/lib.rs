@@ -43,7 +43,7 @@ use adapter::*;
 use component::*;
 pub use component::{
     CancellationToken, Component, ComponentCompletion, ComponentContext, ComponentNode,
-    ComponentSender, ComponentTask, ComponentTimer, Context, EffectKey, LocalSender, ViewContext,
+    ComponentTask, ComponentTimer, Context, EffectKey, LocalSender, ThreadSender, ViewContext,
     WindowHandle, component, provide,
 };
 pub use declaration::generated_declarations::*;

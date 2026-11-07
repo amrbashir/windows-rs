@@ -192,14 +192,14 @@ impl<A: Adapter> ComponentHost<A> {
         self.runtime.adapter()
     }
 
-    pub fn sender<C: Component>(&self, key: &Key) -> Option<ComponentSender<C::Message>>
+    pub fn sender<C: Component>(&self, key: &Key) -> Option<ThreadSender<C::Message>>
     where
         C::Message: Send,
     {
         self.sender_at::<C>(std::slice::from_ref(key))
     }
 
-    pub fn sender_at<C: Component>(&self, path: &[Key]) -> Option<ComponentSender<C::Message>>
+    pub fn sender_at<C: Component>(&self, path: &[Key]) -> Option<ThreadSender<C::Message>>
     where
         C::Message: Send,
     {
@@ -208,7 +208,7 @@ impl<A: Adapter> ComponentHost<A> {
             scope
                 .component
                 .sender()
-                .downcast_ref::<ComponentSender<C::Message>>()
+                .downcast_ref::<ThreadSender<C::Message>>()
                 .unwrap()
                 .clone()
         })

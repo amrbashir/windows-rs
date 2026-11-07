@@ -4,7 +4,7 @@ pub struct ComponentContext<'a, C: Component> {
     pub(super) input: &'a C::Input,
     pub(super) reference: ElementRef,
     pub(super) local_sender: LocalSender<C::Message>,
-    pub(super) sender: ComponentSender<C::Message>,
+    pub(super) sender: ThreadSender<C::Message>,
     pub(super) services: Arc<dyn ComponentServices>,
     pub(super) tasks: Arc<Mutex<Vec<SyncWeak<TaskControl>>>>,
     pub(super) ui_services: Rc<dyn ComponentUiServices>,

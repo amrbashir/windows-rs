@@ -131,8 +131,8 @@ impl<M> Clone for LocalSender<M> {
 }
 
 impl<M: 'static> LocalSender<M> {
-    pub(crate) fn thread_sender(&self) -> ComponentSender<M> {
-        ComponentSender {
+    pub(crate) fn thread_sender(&self) -> ThreadSender<M> {
+        ThreadSender {
             component: self.component,
             queue: Arc::clone(&self.wake),
             marker: PhantomData,
@@ -202,20 +202,20 @@ impl<M: 'static> LocalSender<M> {
     }
 }
 
-pub struct ComponentSender<M> {
+pub struct ThreadSender<M> {
     pub(super) component: ComponentId,
     pub(super) queue: SharedQueue,
     pub(super) marker: PhantomData<fn(M)>,
 }
 
-impl<M> PartialEq for ComponentSender<M> {
+impl<M> PartialEq for ThreadSender<M> {
     fn eq(&self, other: &Self) -> bool {
         self.component == other.component && Arc::ptr_eq(&self.queue, &other.queue)
     }
 }
-impl<M> Eq for ComponentSender<M> {}
+impl<M> Eq for ThreadSender<M> {}
 
-impl<M> Clone for ComponentSender<M> {
+impl<M> Clone for ThreadSender<M> {
     fn clone(&self) -> Self {
         Self {
             component: self.component,
@@ -225,7 +225,7 @@ impl<M> Clone for ComponentSender<M> {
     }
 }
 
-impl<M: Send + 'static> ComponentSender<M> {
+impl<M: Send + 'static> ThreadSender<M> {
     #[must_use]
     pub fn send(&self, value: M) -> bool {
         self.enqueue(value, None)
@@ -298,7 +298,7 @@ impl<M: Send + 'static> ComponentSender<M> {
     }
 }
 
-pub struct ComponentCompletion<M>(ComponentSender<M>);
+pub struct ComponentCompletion<M>(ThreadSender<M>);
 
 impl<M> Clone for ComponentCompletion<M> {
     fn clone(&self) -> Self {

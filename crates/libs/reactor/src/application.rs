@@ -34,7 +34,7 @@ impl<A: Application> ApplicationContext<A> {
     ///
     /// Sending wakes the UI dispatcher. Returns false when the queue is full or
     /// the application has shut down. Messages must implement Send.
-    pub fn thread_sender(&self) -> ComponentSender<A::Message>
+    pub fn thread_sender(&self) -> ThreadSender<A::Message>
     where
         A::Message: Send,
     {

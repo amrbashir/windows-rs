@@ -1263,15 +1263,15 @@ impl core::cmp::PartialEq for windows_reactor::ComponentNode
 pub fn windows_reactor::ComponentNode::eq(&self, &Self) -> bool
 impl core::convert::From<windows_reactor::ComponentNode> for windows_reactor::View
 pub fn windows_reactor::View::from(windows_reactor::ComponentNode) -> Self
-pub struct windows_reactor::ComponentSender<M>
-impl<M: core::marker::Send + 'static> windows_reactor::ComponentSender<M>
-pub fn windows_reactor::ComponentSender<M>::callback<T, F>(&self, F) -> windows_reactor::Callback<T> where F: core::ops::function::Fn(T) -> M + 'static
-pub fn windows_reactor::ComponentSender<M>::completion(&self) -> windows_reactor::ComponentCompletion<M>
-pub fn windows_reactor::ComponentSender<M>::forward(&self) -> windows_reactor::Callback<M>
-pub fn windows_reactor::ComponentSender<M>::message(&self, M) -> windows_reactor::Callback<()> where M: core::clone::Clone
-pub fn windows_reactor::ComponentSender<M>::send(&self, M) -> bool
-impl<M> core::clone::Clone for windows_reactor::ComponentSender<M>
-pub fn windows_reactor::ComponentSender<M>::clone(&self) -> Self
+pub struct windows_reactor::ThreadSender<M>
+impl<M: core::marker::Send + 'static> windows_reactor::ThreadSender<M>
+pub fn windows_reactor::ThreadSender<M>::callback<T, F>(&self, F) -> windows_reactor::Callback<T> where F: core::ops::function::Fn(T) -> M + 'static
+pub fn windows_reactor::ThreadSender<M>::completion(&self) -> windows_reactor::ComponentCompletion<M>
+pub fn windows_reactor::ThreadSender<M>::forward(&self) -> windows_reactor::Callback<M>
+pub fn windows_reactor::ThreadSender<M>::message(&self, M) -> windows_reactor::Callback<()> where M: core::clone::Clone
+pub fn windows_reactor::ThreadSender<M>::send(&self, M) -> bool
+impl<M> core::clone::Clone for windows_reactor::ThreadSender<M>
+pub fn windows_reactor::ThreadSender<M>::clone(&self) -> Self
 pub struct windows_reactor::ComponentTask
 impl windows_reactor::ComponentTask
 pub fn windows_reactor::ComponentTask::cancel(&self)

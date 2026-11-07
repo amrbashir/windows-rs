@@ -100,7 +100,7 @@ impl<C: Component> ErasedFactory for TypedFactory<C> {
         ui_services: Rc<dyn ComponentUiServices>,
         contexts: &HashMap<ContextId, ContextValue>,
     ) -> (Box<dyn ErasedComponent>, ComponentRender) {
-        let sender = ComponentSender {
+        let sender = ThreadSender {
             component: id,
             queue: queues.shared,
             marker: PhantomData,
