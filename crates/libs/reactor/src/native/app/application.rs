@@ -335,14 +335,24 @@ impl<A: Application> ApplicationState<A> {
             return;
         }
         for command in commands {
-            if let ApplicationCommand::Show(key) = command {
-                assert!(
-                    self.windows.contains_key(&key),
-                    "application window key {key:?} is not declared"
-                );
-                if !self.pending_show.contains(&key) {
-                    self.pending_show.push(key);
+            let (key, recreate) = match command {
+                ApplicationCommand::Show(key) => (key, false),
+                ApplicationCommand::Recreate(key) => (key, true),
+                ApplicationCommand::Exit => unreachable!(),
+            };
+            let slot = self
+                .windows
+                .get(&key)
+                .unwrap_or_else(|| panic!("application window key {key:?} is not declared"));
+            if recreate {
+                if let Some(id) = slot.instance {
+                    self.application
+                        .services
+                        .push_critical(WindowWork::Close(id));
                 }
+            }
+            if !self.pending_show.contains(&key) {
+                self.pending_show.push(key);
             }
         }
         let pending = self.pending_show.clone();

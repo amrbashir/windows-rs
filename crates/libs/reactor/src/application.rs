@@ -21,6 +21,7 @@ pub struct ApplicationContext<A: Application> {
 
 pub(crate) enum ApplicationCommand {
     Show(Key),
+    Recreate(Key),
     Exit,
 }
 
@@ -67,6 +68,20 @@ impl<A: Application> ApplicationContext<A> {
             .any(|command| matches!(command, ApplicationCommand::Show(current) if *current == key))
         {
             commands.push(ApplicationCommand::Show(key));
+        }
+    }
+
+    /// Closes the current instance and opens a fresh instance of a declared window.
+    ///
+    /// The declaration keeps its key. Recreation waits until the old instance has
+    /// finished closing. Repeated requests before dispatch are coalesced.
+    pub fn recreate_window(&self, key: impl Into<Key>) {
+        let key = key.into();
+        let mut commands = self.commands.borrow_mut();
+        if !commands.iter().any(
+            |command| matches!(command, ApplicationCommand::Recreate(current) if *current == key),
+        ) {
+            commands.push(ApplicationCommand::Recreate(key));
         }
     }
 
@@ -286,6 +301,24 @@ mod tests {
                 .notify_icon("tray", NotifyIcon::new("icon.ico"))
                 .validate();
         });
+    }
+
+    #[test]
+    fn recreation_is_explicit_and_coalesces_for_a_stable_key() {
+        let messages = ApplicationMessages::new(|| {});
+        let context = ApplicationContext::<TestApp> {
+            sender: messages.sender(),
+            commands: RefCell::new(Vec::new()),
+        };
+        context.recreate_window("main");
+        context.recreate_window("main");
+        context.show_window("main");
+        let commands = context.commands.borrow();
+        assert_eq!(commands.len(), 2);
+        assert!(
+            matches!(&commands[0], ApplicationCommand::Recreate(key) if *key == Key::from("main"))
+        );
+        assert!(matches!(&commands[1], ApplicationCommand::Show(key) if *key == Key::from("main")));
     }
 
     #[test]
