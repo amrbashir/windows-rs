@@ -136,17 +136,35 @@ impl ApplicationView {
 /// A notification-area icon owned by an application declaration.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NotifyIcon {
-    pub(crate) path: std::path::PathBuf,
+    pub(crate) path: NotifyIconSource,
     pub(crate) tooltip: Option<String>,
     pub(crate) on_activate: Option<Callback<ScreenPoint>>,
     pub(crate) menu: Option<Menu>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum NotifyIconSource {
+    File(std::path::PathBuf),
+    Resource(u16),
 }
 
 impl NotifyIcon {
     /// Uses an `.ico` file. A file that fails to load panics, like other contract violations.
     pub fn new(path: impl Into<std::path::PathBuf>) -> Self {
         Self {
-            path: path.into(),
+            path: NotifyIconSource::File(path.into()),
+            tooltip: None,
+            on_activate: None,
+            menu: None,
+        }
+    }
+
+    /// Loads an icon resource from the current executable.
+    ///
+    /// The resource ID identifies an RT_GROUP_ICON entry. No file is extracted.
+    pub fn from_resource(id: u16) -> Self {
+        Self {
+            path: NotifyIconSource::Resource(id),
             tooltip: None,
             on_activate: None,
             menu: None,

@@ -1,9 +1,12 @@
 #[allow(non_snake_case, non_camel_case_types, clippy::upper_case_acronyms)]
 mod bindings;
+use crate::application::NotifyIconSource;
 use bindings::*;
 use std::mem::size_of;
 use std::os::windows::ffi::OsStrExt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+#[cfg(test)]
+use std::path::PathBuf;
 use windows_core::{Error, PCWSTR, Result};
 use windows_window::{Window, WindowBuilder};
 
@@ -32,16 +35,33 @@ struct OwnedIcon {
 }
 
 impl OwnedIcon {
-    fn load(path: &Path) -> Result<Self> {
-        let path = wide_path(path)?;
+    fn load(source: &NotifyIconSource) -> Result<Self> {
+        let path;
+        let (module, name, flags) = match source {
+            NotifyIconSource::File(file) => {
+                path = wide_path(file)?;
+                (
+                    core::ptr::null_mut(),
+                    PCWSTR(path.as_ptr()),
+                    LR_LOADFROMFILE as u32,
+                )
+            }
+            NotifyIconSource::Resource(id) => {
+                let module = unsafe { GetModuleHandleW(PCWSTR::null()) };
+                if module.is_null() {
+                    return Err(Error::from_thread());
+                }
+                (module, PCWSTR(*id as usize as *const u16), 0)
+            }
+        };
         let icon = unsafe {
             LoadImageW(
-                core::ptr::null_mut(),
-                PCWSTR(path.as_ptr()),
+                module,
+                name,
                 IMAGE_ICON as u32,
                 GetSystemMetrics(SM_CXSMICON),
                 GetSystemMetrics(SM_CYSMICON),
-                LR_LOADFROMFILE as u32,
+                flags,
             )
         };
         if icon.is_null() {
@@ -209,19 +229,19 @@ pub struct NotifyIcon {
 }
 
 impl NotifyIcon {
-    /// Begins configuring a notification-area icon loaded from an `.ico` file.
+    /// Begins configuring a notification-area icon from a file or executable resource.
     #[allow(clippy::new_ret_no_self)]
-    pub fn new(path: impl Into<PathBuf>) -> NotifyIconBuilder {
+    pub(crate) fn new(path: &NotifyIconSource) -> NotifyIconBuilder {
         NotifyIconBuilder {
             handler: None,
-            icon: path.into(),
+            icon: path.clone(),
             tooltip: None,
         }
     }
 
-    /// Replaces the icon using an `.ico` file.
-    pub fn set_icon(&mut self, path: impl AsRef<Path>) -> Result<()> {
-        let icon = OwnedIcon::load(path.as_ref())?;
+    /// Replaces the icon from a file or executable resource.
+    pub(crate) fn set_icon(&mut self, path: &NotifyIconSource) -> Result<()> {
+        let icon = OwnedIcon::load(path)?;
         self.registration
             .replace_icon_with(icon, self.callback_window.hwnd(), &mut shell_notify)
     }
@@ -247,7 +267,7 @@ impl Drop for NotifyIcon {
 /// Configures a [`NotifyIcon`].
 pub struct NotifyIconBuilder {
     handler: Option<EventHandler>,
-    icon: PathBuf,
+    icon: NotifyIconSource,
     tooltip: Option<String>,
 }
 
@@ -403,16 +423,15 @@ mod tests {
 
     #[test]
     fn builder_accepts_the_public_configuration() {
-        let _builder =
-            NotifyIcon::new("icon.ico")
-                .tooltip("Example")
-                .on_event(|event| match event {
-                    NotifyIconEvent::Activate { position }
-                    | NotifyIconEvent::ContextMenu { position } => {
-                        let _ = position;
-                    }
-                    NotifyIconEvent::Recover => {}
-                });
+        let _builder = NotifyIcon::new(&NotifyIconSource::File("icon.ico".into()))
+            .tooltip("Example")
+            .on_event(|event| match event {
+                NotifyIconEvent::Activate { position }
+                | NotifyIconEvent::ContextMenu { position } => {
+                    let _ = position;
+                }
+                NotifyIconEvent::Recover => {}
+            });
     }
 
     fn registration(icon: usize) -> Registration {

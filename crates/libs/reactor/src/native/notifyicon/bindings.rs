@@ -1,3 +1,4 @@
+windows_core::link!("kernel32.dll" "system" fn GetModuleHandleW(name: windows_core::PCWSTR) -> HINSTANCE);
 windows_core::link!("user32.dll" "system" fn ChangeWindowMessageFilterEx(hwnd : HWND, message : UINT, action : DWORD, pchangefilterstruct : PCHANGEFILTERSTRUCT) -> windows_core::BOOL);
 windows_core::link!("user32.dll" "system" fn DestroyIcon(hicon : HICON) -> windows_core::BOOL);
 windows_core::link!("user32.dll" "system" fn GetSystemMetrics(nindex : i32) -> i32);
