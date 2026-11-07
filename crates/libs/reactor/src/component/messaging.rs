@@ -65,23 +65,43 @@ impl<M: 'static> ApplicationMessages<M> {
     }
 
     pub(crate) fn pop(&self) -> Option<M> {
-        self.sender.wake.lock().unwrap().wake_pending = false;
-        self.sender.queue.borrow_mut().pop_front().map(|message| {
-            let LocalMessageValue::Message(value) = message.value else {
-                unreachable!()
-            };
-            *value.downcast::<M>().unwrap()
-        })
+        let mut shared = self.sender.wake.lock().unwrap();
+        shared.wake_pending = false;
+        let mut local = self.sender.queue.borrow_mut();
+        let use_shared = match (shared.messages.front(), local.front()) {
+            (Some(shared), Some(local)) => shared.sequence < local.sequence,
+            (Some(_), None) => true,
+            _ => false,
+        };
+        if use_shared {
+            shared.messages.pop_front().map(|message| {
+                let MessageValue::Send(value) = message.value else {
+                    unreachable!()
+                };
+                *value.downcast::<M>().unwrap()
+            })
+        } else {
+            local.pop_front().map(|message| {
+                let LocalMessageValue::Message(value) = message.value else {
+                    unreachable!()
+                };
+                *value.downcast::<M>().unwrap()
+            })
+        }
     }
 
     pub(crate) fn is_empty(&self) -> bool {
-        self.sender.queue.borrow().is_empty()
+        self.sender.wake.lock().unwrap().messages.is_empty()
+            && self.sender.queue.borrow().is_empty()
     }
 }
 
 impl<M> Drop for ApplicationMessages<M> {
     fn drop(&mut self) {
-        self.sender.wake.lock().unwrap().closed = true;
+        let mut shared = self.sender.wake.lock().unwrap();
+        shared.closed = true;
+        shared.messages.clear();
+        shared.waker = None;
         self.sender.queue.borrow_mut().clear();
     }
 }
@@ -111,6 +131,14 @@ impl<M> Clone for LocalSender<M> {
 }
 
 impl<M: 'static> LocalSender<M> {
+    pub(crate) fn thread_sender(&self) -> ComponentSender<M> {
+        ComponentSender {
+            component: self.component,
+            queue: Arc::clone(&self.wake),
+            marker: PhantomData,
+        }
+    }
+
     #[must_use]
     pub fn send(&self, value: M) -> bool {
         let mut wake_queue = self.wake.lock().unwrap();
@@ -179,6 +207,13 @@ pub struct ComponentSender<M> {
     pub(super) queue: SharedQueue,
     pub(super) marker: PhantomData<fn(M)>,
 }
+
+impl<M> PartialEq for ComponentSender<M> {
+    fn eq(&self, other: &Self) -> bool {
+        self.component == other.component && Arc::ptr_eq(&self.queue, &other.queue)
+    }
+}
+impl<M> Eq for ComponentSender<M> {}
 
 impl<M> Clone for ComponentSender<M> {
     fn clone(&self) -> Self {

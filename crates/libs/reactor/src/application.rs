@@ -29,6 +29,17 @@ impl<A: Application> ApplicationContext<A> {
         self.sender.clone()
     }
 
+    /// Returns a sender that can deliver application messages from any thread.
+    ///
+    /// Sending wakes the UI dispatcher. Returns false when the queue is full or
+    /// the application has shut down. Messages must implement Send.
+    pub fn thread_sender(&self) -> ComponentSender<A::Message>
+    where
+        A::Message: Send,
+    {
+        self.sender.thread_sender()
+    }
+
     pub fn callback<T>(&self, map: impl Fn(T) -> A::Message + 'static) -> Callback<T> {
         self.sender.callback(map)
     }
@@ -220,6 +231,41 @@ mod tests {
         fn view(&self, _: &(), _: &mut ViewContext<Self>) -> View {
             TextBlock::new().into()
         }
+    }
+
+    #[test]
+    fn thread_sender_wakes_orders_messages_and_retires_with_application() {
+        use std::sync::{
+            Arc,
+            atomic::{AtomicUsize, Ordering},
+        };
+        let wakes = Arc::new(AtomicUsize::new(0));
+        let counter = wakes.clone();
+        let messages = ApplicationMessages::new(move || {
+            counter.fetch_add(1, Ordering::SeqCst);
+        });
+        let context = ApplicationContext::<TestApp> {
+            sender: messages.sender(),
+            commands: RefCell::new(Vec::new()),
+        };
+        let sender = context.thread_sender();
+        assert!(context.sender().send(false));
+        let worker = sender.clone();
+        std::thread::spawn(move || assert!(worker.send(true)))
+            .join()
+            .unwrap();
+        assert!(!messages.is_empty());
+        assert_eq!(messages.pop(), Some(false));
+        assert_eq!(messages.pop(), Some(true));
+        assert!(messages.is_empty());
+        std::thread::spawn(move || assert!(sender.send(true)))
+            .join()
+            .unwrap();
+        assert_eq!(wakes.load(Ordering::SeqCst), 2);
+        assert_eq!(messages.pop(), Some(true));
+        let sender = context.thread_sender();
+        drop(messages);
+        assert!(!sender.send(false));
     }
 
     #[test]
