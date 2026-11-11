@@ -781,6 +781,7 @@ pub fn windows_reactor::Border::translation(self, f64, f64) -> Self
 pub fn windows_reactor::Border::translation_transition(self, core::time::Duration) -> Self
 pub fn windows_reactor::Border::vertical_alignment(self, windows_reactor::VerticalAlignment) -> Self
 pub fn windows_reactor::Border::width(self, f64) -> Self
+pub fn windows_reactor::Border::width_transition(self, core::time::Duration) -> Self
 impl core::convert::From<windows_reactor::Border> for windows_reactor::View
 pub fn windows_reactor::View::from(windows_reactor::Border) -> Self
 impl core::default::Default for windows_reactor::Border

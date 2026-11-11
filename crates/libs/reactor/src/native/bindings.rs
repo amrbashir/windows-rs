@@ -10272,6 +10272,16 @@ impl IFrameworkElement {
             .map(|| result__)
         }
     }
+    pub(crate) fn Width(&self) -> windows_core::Result<f64> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).Width)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .map(|| result__)
+        }
+    }
     pub(crate) fn SetWidth(&self, value: f64) -> windows_core::Result<()> {
         unsafe {
             (windows_core::Interface::vtable(self).SetWidth)(
@@ -10481,7 +10491,7 @@ pub struct IFrameworkElement_Vtbl {
         unsafe extern "system" fn(*mut core::ffi::c_void, *mut f64) -> windows_core::HRESULT,
     pub ActualHeight:
         unsafe extern "system" fn(*mut core::ffi::c_void, *mut f64) -> windows_core::HRESULT,
-    Width: usize,
+    pub Width: unsafe extern "system" fn(*mut core::ffi::c_void, *mut f64) -> windows_core::HRESULT,
     pub SetWidth: unsafe extern "system" fn(*mut core::ffi::c_void, f64) -> windows_core::HRESULT,
     Height: usize,
     pub SetHeight: unsafe extern "system" fn(*mut core::ffi::c_void, f64) -> windows_core::HRESULT,
@@ -16767,6 +16777,73 @@ pub struct IStorageItem_Vtbl {
     ) -> windows_core::HRESULT,
 }
 windows_core::imp::define_interface!(
+    IStoryboard,
+    IStoryboard_Vtbl,
+    0x04d41bb3_8721_519e_8e53_fb8b34920305
+);
+impl windows_core::RuntimeType for IStoryboard {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+impl IStoryboard {
+    pub(crate) fn Children(&self) -> windows_core::Result<TimelineCollection> {
+        unsafe {
+            let mut result__ = core::mem::zeroed();
+            (windows_core::Interface::vtable(self).Children)(
+                windows_core::Interface::as_raw(self),
+                &mut result__,
+            )
+            .and_then(|| windows_core::imp::Type::from_abi(result__))
+        }
+    }
+    pub(crate) fn Stop(&self) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).Stop)(windows_core::Interface::as_raw(self)).ok()
+        }
+    }
+    pub(crate) fn Begin(&self) -> windows_core::Result<()> {
+        unsafe {
+            (windows_core::Interface::vtable(self).Begin)(windows_core::Interface::as_raw(self))
+                .ok()
+        }
+    }
+}
+#[repr(C)]
+pub struct IStoryboard_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    pub Children: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+    Seek: usize,
+    pub Stop: unsafe extern "system" fn(*mut core::ffi::c_void) -> windows_core::HRESULT,
+    pub Begin: unsafe extern "system" fn(*mut core::ffi::c_void) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    IStoryboardStatics,
+    IStoryboardStatics_Vtbl,
+    0xdd18519b_d4e4_597d_a0b7_655ebdd35efa
+);
+impl windows_core::RuntimeType for IStoryboardStatics {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct IStoryboardStatics_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
+    TargetPropertyProperty: usize,
+    GetTargetProperty: usize,
+    SetTargetProperty: usize,
+    TargetNameProperty: usize,
+    GetTargetName: usize,
+    SetTargetName: usize,
+    pub SetTarget: unsafe extern "system" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
     IStream,
     IStream_Vtbl,
     0x0000000c_0000_0000_c000_000000000046
@@ -18586,6 +18663,19 @@ pub struct ITimePickerStatics_Vtbl {
         *mut core::ffi::c_void,
         *mut *mut core::ffi::c_void,
     ) -> windows_core::HRESULT,
+}
+windows_core::imp::define_interface!(
+    ITimeline,
+    ITimeline_Vtbl,
+    0xd0f9b330_cc2a_5b05_9786_2da4c6584581
+);
+impl windows_core::RuntimeType for ITimeline {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_interface::<Self>();
+}
+#[repr(C)]
+pub struct ITimeline_Vtbl {
+    pub base__: windows_core::IInspectable_Vtbl,
 }
 windows_core::imp::define_interface!(
     ITitleBar,
@@ -27603,6 +27693,57 @@ impl windows_core::RuntimeName for StackPanel {
 unsafe impl Send for StackPanel {}
 unsafe impl Sync for StackPanel {}
 #[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Storyboard(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    Storyboard,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+windows_core::imp::required_hierarchy!(Storyboard, Timeline, DependencyObject);
+impl Storyboard {
+    pub(crate) fn SetTarget<P0, P1>(timeline: P0, target: P1) -> windows_core::Result<()>
+    where
+        P0: windows_core::Param<Timeline>,
+        P1: windows_core::Param<DependencyObject>,
+    {
+        Self::IStoryboardStatics(|this| unsafe {
+            (windows_core::Interface::vtable(this).SetTarget)(
+                windows_core::Interface::as_raw(this),
+                timeline.param().abi(),
+                target.param().abi(),
+            )
+            .ok()
+        })
+    }
+    fn IStoryboardStatics<R, F: FnOnce(&IStoryboardStatics) -> windows_core::Result<R>>(
+        callback: F,
+    ) -> windows_core::Result<R> {
+        static SHARED: windows_core::imp::FactoryCache<Storyboard, IStoryboardStatics> =
+            windows_core::imp::FactoryCache::new();
+        SHARED.call(callback)
+    }
+}
+impl windows_core::RuntimeType for Storyboard {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, IStoryboard>();
+}
+unsafe impl windows_core::Interface for Storyboard {
+    type Vtable = <IStoryboard as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <IStoryboard as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for Storyboard {
+    type Target = IStoryboard;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for Storyboard {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Media.Animation.Storyboard";
+}
+unsafe impl Send for Storyboard {}
+unsafe impl Sync for Storyboard {}
+#[repr(transparent)]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Stretch(pub i32);
 impl Stretch {
@@ -29263,6 +29404,63 @@ impl windows_core::RuntimeName for TimePickerSelectedValueChangedEventArgs {
 }
 unsafe impl Send for TimePickerSelectedValueChangedEventArgs {}
 unsafe impl Sync for TimePickerSelectedValueChangedEventArgs {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Timeline(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    Timeline,
+    windows_core::IUnknown,
+    windows_core::IInspectable
+);
+windows_core::imp::required_hierarchy!(Timeline, DependencyObject);
+impl windows_core::RuntimeType for Timeline {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, ITimeline>();
+}
+unsafe impl windows_core::Interface for Timeline {
+    type Vtable = <ITimeline as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID = <ITimeline as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for Timeline {
+    type Target = ITimeline;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for Timeline {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Media.Animation.Timeline";
+}
+unsafe impl Send for Timeline {}
+unsafe impl Sync for Timeline {}
+#[repr(transparent)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TimelineCollection(windows_core::IUnknown);
+windows_core::imp::interface_hierarchy!(
+    TimelineCollection,
+    windows_core::IUnknown,
+    windows_core::IInspectable,
+    windows_collections::IVector<Timeline>
+);
+impl windows_core::RuntimeType for TimelineCollection {
+    const SIGNATURE: windows_core::imp::ConstBuffer =
+        windows_core::imp::ConstBuffer::for_class::<Self, windows_collections::IVector<Timeline>>();
+}
+unsafe impl windows_core::Interface for TimelineCollection {
+    type Vtable = <windows_collections::IVector<Timeline> as windows_core::Interface>::Vtable;
+    const IID: windows_core::GUID =
+        <windows_collections::IVector<Timeline> as windows_core::Interface>::IID;
+}
+impl core::ops::Deref for TimelineCollection {
+    type Target = windows_collections::IVector<Timeline>;
+    fn deref(&self) -> &Self::Target {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+impl windows_core::RuntimeName for TimelineCollection {
+    const NAME: &'static str = "Microsoft.UI.Xaml.Media.Animation.TimelineCollection";
+}
+unsafe impl Send for TimelineCollection {}
+unsafe impl Sync for TimelineCollection {}
 #[repr(transparent)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TitleBar(windows_core::IUnknown);

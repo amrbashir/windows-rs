@@ -28,6 +28,7 @@ mod timer;
 mod tray;
 mod tree;
 mod typography;
+mod width_transition;
 mod window;
 
 pub use controlled::{CHURN_ITEMS, date};
@@ -393,6 +394,7 @@ pub fn run(fixture: &str) -> windows_core::Result<()> {
         "window-transparent-close" => {
             App::run_component::<window::WindowFixture>(window::WindowMode::TransparentClose)?;
         }
+        "width-transition" => App::run_component::<width_transition::WidthTransitionFixture>(())?,
         "window-desired-size" => App::run_component::<window::DesiredSizeFixture>(())?,
         "window-placement" => App::run_component::<window::PlacementFixture>(())?,
         "window-titlebar-initial" => App::run_component::<window::TitleBarFixture>(true)?,

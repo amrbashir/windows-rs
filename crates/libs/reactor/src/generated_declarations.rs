@@ -2347,6 +2347,18 @@ impl Border {
         );
         self
     }
+    /// Animates subsequent explicit width changes with native WinUI sine-out easing.
+    /// Initial widths are applied immediately. Interrupted transitions start at the current
+    /// animated width; zero duration or removing the transition settles at the target.
+    /// Clearing width restores Auto immediately. Width affects layout, so this animation
+    /// runs on the UI thread.
+    pub fn width_transition(mut self, width_transition: Duration) -> Self {
+        self.0 = self.0.property(
+            PropertyId::WidthTransition,
+            PropertyValue::Duration(width_transition),
+        );
+        self
+    }
     pub fn scale(mut self, scale: f64) -> Self {
         assert!(
             scale.is_finite() && scale >= 0.0,

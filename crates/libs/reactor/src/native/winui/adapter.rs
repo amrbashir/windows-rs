@@ -326,6 +326,7 @@ impl WinUiAdapter {
                         .handles
                         .remove(object)
                         .ok_or(WinUiError::MissingObject(*object))?;
+                    self.width_transitions.remove(object);
                     self.release_object(*object, handle)?;
                 }
             }

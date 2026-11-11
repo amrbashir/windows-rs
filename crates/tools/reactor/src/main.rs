@@ -179,6 +179,7 @@ enum PropertyAdapter {
     IconElement,
     IconSource,
     ImageUri,
+    WidthTransition,
     ImplicitOpacityTransition,
     ImplicitScale,
     ImplicitScaleTransition,
@@ -213,7 +214,8 @@ impl PropertyAdapter {
             Self::GridColumns | Self::GridRows => Value::GridLengths,
             Self::IconElement | Self::IconSource => Value::Icon,
             Self::ImageUri => Value::ImageSource,
-            Self::ImplicitOpacityTransition
+            Self::WidthTransition
+            | Self::ImplicitOpacityTransition
             | Self::ImplicitScaleTransition
             | Self::ImplicitTranslationTransition => Value::Duration,
             Self::ImplicitScale => Value::F64,
@@ -1708,6 +1710,15 @@ fn generate_declarations(
                     property.name
                 ));
                 continue;
+            }
+            if property.adapter == Some(PropertyAdapter::WidthTransition) {
+                output.push_str(concat!(
+                    "/// Animates subsequent explicit width changes with native WinUI sine-out easing.\n",
+                    "/// Initial widths are applied immediately. Interrupted transitions start at the current\n",
+                    "/// animated width; zero duration or removing the transition settles at the target.\n",
+                    "/// Clearing width restores Auto immediately. Width affects layout, so this animation\n",
+                    "/// runs on the UI thread.\n",
+                ));
             }
             let argument = match property.adapter {
                 Some(PropertyAdapter::RichEditText) => "text: impl Into<Rc<str>>".to_string(),

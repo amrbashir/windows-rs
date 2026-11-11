@@ -327,6 +327,10 @@ name = "OpacityTransition"
 adapter = "implicit_opacity_transition"
 
 [[objects.properties]]
+name = "WidthTransition"
+adapter = "width_transition"
+
+[[objects.properties]]
 name = "Scale"
 adapter = "implicit_scale"
 validation = "finite_non_negative"

@@ -1504,6 +1504,11 @@ fn emit_native_property_arms(
     metadata: &tool_reactor_metadata::MetadataResolver,
 ) {
     match adapter {
+        // The adapter manages this policy around width dependency-property writes.
+        PropertyAdapter::WidthTransition => output.push_str(&format!(
+            "{pattern}None) | {pattern}Some(PropertyValue::Duration(_))) => Some({{ let _ = &{target}; Ok(()) }}),\n"
+        )),
+
         PropertyAdapter::ImplicitTranslation => output.push_str(&format!(
             "{pattern}None) => Some({target}.cast::<native::UIElement>().map_err(Into::into)\
              .and_then(|object| object.SetTranslation(native::Vector3::default()).map_err(Into::into))),\n\

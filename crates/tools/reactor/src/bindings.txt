@@ -384,3 +384,7 @@ Windows::Win32::WS_EX_LAYERED
 Windows::Win32::WS_EX_TOOLWINDOW
 Windows::Win32::WS_EX_TOPMOST
 Windows::Win32::WS_POPUP
+
+Microsoft::UI::Xaml::IFrameworkElement::get_Width
+Microsoft::UI::Xaml::Media::Animation::Storyboard::SetTarget
+Microsoft::UI::Xaml::Media::Animation::IStoryboard::{get_Children, Begin, Stop}

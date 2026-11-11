@@ -42,6 +42,7 @@ mod text;
 mod timer;
 mod tree;
 mod typography;
+mod width_transition;
 mod window;
 
 use automation::*;

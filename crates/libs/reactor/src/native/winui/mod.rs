@@ -13,6 +13,7 @@ mod objects;
 mod relations;
 mod style;
 mod virtualization;
+mod width_transition;
 mod window;
 
 pub(crate) use adapter::SharedWinUiAdapter;
@@ -508,6 +509,7 @@ fn observe_xaml_scale(
 
 pub struct WinUiAdapter {
     handles: HashMap<ObjectId, Handle>,
+    width_transitions: HashMap<ObjectId, width_transition::WidthTransition>,
     image_subscriptions: HashMap<ObjectId, ImageSubscription>,
     images: ImageCache,
     released_images: Vec<Rc<NativeImageSource>>,
@@ -558,6 +560,7 @@ impl Default for WinUiAdapter {
     fn default() -> Self {
         Self {
             handles: HashMap::new(),
+            width_transitions: HashMap::new(),
             image_subscriptions: HashMap::new(),
             images: ImageCache::default(),
             released_images: Vec::new(),

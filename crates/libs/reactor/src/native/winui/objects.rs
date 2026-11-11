@@ -545,6 +545,18 @@ pub(super) fn set_properties(
         state
             .borrow_mut()
             .prepare_properties(object, set, clear, initializing)?;
+    // Width animation can trigger layout. Run it after releasing the adapter borrow.
+    let width_update =
+        state
+            .borrow_mut()
+            .prepare_width_transition(object, set, clear, initializing)?;
+    let width_handled = width_update.is_some();
+    if let Some(update) = width_update {
+        let running = update.apply()?;
+        if let Some(transition) = state.borrow_mut().width_transitions.get_mut(&object) {
+            transition.running = running;
+        }
+    }
     let event_queue = Rc::clone(&state.borrow().event_queue);
     let properties = clear
         .iter()
@@ -553,7 +565,11 @@ pub(super) fn set_properties(
             set.iter()
                 .map(|property| (property.id, Some(&property.value))),
         )
-        .filter(|(id, _)| !is_implicit_transition(*id));
+        .filter(|(id, _)| {
+            !is_implicit_transition(*id)
+                && *id != PropertyId::WidthTransition
+                && !(width_handled && *id == PropertyId::Width)
+        });
     for (property, value) in properties {
         // Reactor's write raises the event that reports it; drop it and record the native value
         // the write produced instead.

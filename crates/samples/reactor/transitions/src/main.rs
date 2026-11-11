@@ -61,6 +61,10 @@ impl Component for Transitions {
                 .on_click(context.forward())
                 .content("Toggle")
                 .into(),
+            swatch("Width (click again to reverse)")
+                .width(if toggled { 320.0 } else { 200.0 })
+                .width_transition(Duration::from_millis(600))
+                .into(),
             swatch("Opacity")
                 .opacity(if toggled { 0.2 } else { 1.0 })
                 .opacity_transition(Duration::from_secs(1))

@@ -4279,6 +4279,15 @@ impl GeneratedHandle {
                     .map_err(Into::into)
                     .and_then(|object| set_opacity_transition(&object, Some(*value))),
             ),
+            (Self::Border(object), PropertyId::WidthTransition, None)
+            | (
+                Self::Border(object),
+                PropertyId::WidthTransition,
+                Some(PropertyValue::Duration(_)),
+            ) => Some({
+                let _ = &object.value;
+                Ok(())
+            }),
             (Self::Border(object), PropertyId::Scale, None) => Some(
                 object
                     .value
