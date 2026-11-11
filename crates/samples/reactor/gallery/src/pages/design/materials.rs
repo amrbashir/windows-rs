@@ -21,6 +21,7 @@ pub fn materials_page(
         WindowBackdrop::MicaAlt => "Mica Alt uses a stronger tint for tabbed interfaces.",
         WindowBackdrop::Acrylic => "Acrylic provides a translucent blurred material.",
         WindowBackdrop::None => "No system backdrop; the window uses a solid background.",
+        WindowBackdrop::Transparent => "A fully transparent backdrop behind the window content.",
     };
     page_content(
         "Materials",
